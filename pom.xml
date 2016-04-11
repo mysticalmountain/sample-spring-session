@@ -10,6 +10,8 @@
     <modules>
         <module>http-session</module>
         <module>redis-session</module>
+        <module>http-session-annotaion</module>
+        <module>redis-session-cluster</module>
     </modules>
     <packaging>pom</packaging>
 
