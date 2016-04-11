@@ -1,10 +1,11 @@
+[TOC]
 # spring session redis 
 spring session 实现了HttpSession 的完全透明化的分布式实现。spring session支持多种策略（一个浏览器一个或多个session）,cookie方式存储session,http header存储session
 ## 步骤
 1. 增加spring session 依赖
 ```xml
     <dependency>
-        <groupId>org.springframework.session</groupId>
+        <groupId>org.springframewBork.session</groupId>
         <artifactId>spring-session-data-redis</artifactId>
         <version>1.1.1.RELEASE</version>
     </dependency>
@@ -45,6 +46,54 @@ spring session 实现了HttpSession 的完全透明化的分布式实现。sprin
     </filter-mapping>
 ```
 
+## 集群
+spring session redis 目前只支持redis官方的的集群方案sentinel，spring配置参数如下
+```xml
+    <bean class="org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration">
+        <property name="maxInactiveIntervalInSeconds" value="60" />         <!--超时时间-->
+    </bean>
+
+    <!--集群配置-->
+    <bean id="redisSentinelConfiguration" class="org.springframework.data.redis.connection.RedisSentinelConfiguration">
+        <property name="master">
+            <bean class="org.springframework.data.redis.connection.RedisNode">
+                <property name="name" value="mymaster"/>
+            </bean>
+        </property>
+        <property name="sentinels">
+            <set>
+                <bean class="org.springframework.data.redis.connection.RedisNode">
+                    <constructor-arg name="host" value="127.0.0.1"/>
+                    <constructor-arg name="port" value="26379"/>
+                </bean>
+                <bean class="org.springframework.data.redis.connection.RedisNode">
+                    <constructor-arg name="host" value="127.0.0.1"/>
+                    <constructor-arg name="port" value="26380"/>
+                </bean>
+                <bean class="org.springframework.data.redis.connection.RedisNode">
+                    <constructor-arg name="host" value="127.0.0.1"/>
+                    <constructor-arg name="port" value="26381"/>
+                </bean>
+            </set>
+        </property>
+    </bean>
+
+    <bean id="jeidsConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+        <constructor-arg ref="redisSentinelConfiguration"/>
+        <property name="database" value="4" />
+        <property name="usePool" value="true" />
+        <property name="poolConfig" ref="jedisPoolConfig" />
+    </bean>
+
+    <!--redis链接池-->
+    <bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+        <property name="maxIdle" value="3" />
+        <property name="maxTotal" value="10" />
+        <property name="minIdle" value="1" />
+        <property name="maxWaitMillis" value="10000" />
+    </bean>
+```
+
 ## 测试
 1. 启动 redis-session模块
 2. 访问http://localhost:8080/main
@@ -62,9 +111,9 @@ spring session 实现了HttpSession 的完全透明化的分布式实现。sprin
 ```
 
 
-
+# 示例
+示例代码请参考目录HD_基于Redist的Session共享实现/sample-spring-session.zip
 
 # 待完善
-1. 以注解形式配置spring session redis
-2. 以配置参数形式做spring session redis 和 web容器session切换
+以配置参数形式做spring session redis 和 web容器session切换
 
